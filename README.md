@@ -1,6 +1,7 @@
 # webapp
 Example single-page webapp via Java Spark and Bootstrap
 
+
 ## Application building blocks
 > [Spark](http://sparkjava.com) - A micro framework for creating web applications in Kotlin and Java 8 with minimal effort
 
@@ -15,12 +16,17 @@ This project uses VSCode .devcontainer support -- look in the directory for a sa
 git clone git@github.com:mattygiedt/webapp.git
 cd webapp
 code . <open project inside dev container>
-root@272aebfa0282:/workspaces/webapp# gradle build
+root@272aebfa0282:/workspaces/webapp# gradle clean build
 
 BUILD SUCCESSFUL in 844ms
-8 actionable tasks: 8 up-to-date
+13 actionable tasks: 13 up-to-date
 root@272aebfa0282:/workspaces/webapp#
 ```
+
+
+## Configuration
+Logback, Banner and Spark configuration files are located under the `/app/src/main/resources` directory. These are brought together with a protobuf-based `resources/config/webapp.conf` file. I have found protobuf to be excellent for application / system / enterprise configuration as the reflection and code-generation capabilities allow you to leverage the config-as-code DevOps paradigm to the extreme. Flatbuffers has replaced protobuf in the performance and messaging arena, but I find protobuf to be better for 'human readable' workflows.
+
 
 ## Run the WebApp
 ```
@@ -55,9 +61,9 @@ JoranConfigurator configuration file from application configuration: logging/log
 > :app:run
 ```
 
+
 ## Open a browser and view the HTML
+Try clicking [here](http://localhost:8888) once you've started the webapp, assuming you haven't made any config changes.
 
-Try clicking [here](http://localhost:8888) once you've started the webapp.
-
-You should see something like:
+After playing around for a bit, you should be able to generate something that looks like:
 ![Sample Window](image.png)

@@ -11,9 +11,13 @@ import ch.qos.logback.core.util.StatusPrinter;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import webapp.config.WebappServerConfig;
+import webapp.proto.WebappConfigProtos;
 
 public final class App {
   private static String getBanner(final String filename) throws Exception {
@@ -75,12 +79,37 @@ public final class App {
   }
 
   public static void main(final String[] args) throws Exception {
-    final Logger log = App.configureLogback("logging/logback.xml");
-    log.info(App.getBanner("banner/webapp.txt"));
+    //
+    // Load the config -- can (should) be added to args[], but this is dummy example code...
+    //
+
+    WebappConfigProtos.WebappServer config = WebappServerConfig.fromResource("config/webapp.conf");
+
+    //
+    // Configure logger and print banner
+    //
+
+    final Logger log = App.configureLogback(config.getLogback());
+    log.info(App.getBanner(config.getBanner()));
+
+    //
+    // Single WebSocket Handler used by all webapp instances
+    //
+
+    final WebSocketHandler websocketHandler = WebSocketHandler.getInstance();
+
+    //
+    //  Load the instances
+    //
+
+    final List<SparkEndpoint> endpoints = new ArrayList<>();
+    for (WebappConfigProtos.WebappServer.Instance instance : config.getInstanceList()) {
+      final WebappConfigProtos.Spark spark = instance.getSpark();
+      endpoints.add(
+          new SparkEndpoint(spark.getPort(), spark.getStaticFilePath(), websocketHandler));
+    }
 
     int returnValue = 0;
-    final WebSocketHandler websocketHandler = WebSocketHandler.getInstance();
-    final SparkEndpoint endpoint = new SparkEndpoint(8888, "/public/webapp", websocketHandler);
     final CountDownLatch shutdownSignal = new CountDownLatch(1);
 
     //
@@ -91,7 +120,9 @@ public final class App {
       @Override
       public void run() {
         try {
-          endpoint.shutdown();
+          for (final SparkEndpoint endpoint : endpoints) {
+            endpoint.shutdown();
+          }
         } catch (Throwable t) {
           log.error("shutdown hook error:", t);
         } finally {
@@ -101,12 +132,19 @@ public final class App {
     });
 
     //
-    //  Start and run our webapp, waiting for ctrl-c
+    //  Start and run our webapp endpoints, waiting for ctrl-c
     //
 
     try {
-      endpoint.start();
-      endpoint.setEndpoints();
+      for (final SparkEndpoint endpoint : endpoints) {
+        endpoint.start();
+        endpoint.setEndpoints();
+      }
+
+      //
+      //  Wait for ctrl-c or signal
+      //
+
       shutdownSignal.await();
     } catch (Throwable t) {
       returnValue = 1;

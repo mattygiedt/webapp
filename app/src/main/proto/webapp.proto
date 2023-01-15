@@ -1,0 +1,23 @@
+package webapp.proto;
+
+option optimize_for = SPEED;
+option java_outer_classname = "WebappConfigProtos";
+
+message Spark
+{
+    required uint32 port = 1;
+    optional string static_file_path = 2;
+}
+
+message WebappServer
+{
+    message Instance
+    {
+        required string name = 1;
+        required Spark spark = 2;
+    }
+
+    required string logback = 1;
+    optional string banner = 2;
+    repeated Instance instance = 3;
+}

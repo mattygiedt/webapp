@@ -6,6 +6,7 @@ RUN apt-get update && \
     apt-get install -y build-essential && \
     apt-get install -y wget unzip curl && \
     apt-get install -y clang-format && \
+    apt-get install -y protobuf-compiler && \
     apt-get clean;
 
 # Fix certificate issues
